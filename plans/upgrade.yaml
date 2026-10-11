@@ -1,0 +1,121 @@
+job_id: job-dcdc2269
+source_cluster: blue-cluster
+source_version: "1.28"
+target_cluster: blue-cluster-green
+target_version: "1.30"
+region: ap-northeast-2
+compatible: true
+addon_compatibility:
+    - name: vpc-cni
+      current_version: v1.15.1-eksbuild.1
+      target_version: v1.18.1-eksbuild.3
+      is_compatible: true
+      recommendation: Upgrade vpc-cni to v1.18.1-eksbuild.3 for Kubernetes 1.30
+    - name: kube-proxy
+      current_version: v1.28.2-eksbuild.2
+      target_version: v1.30.0-eksbuild.1
+      is_compatible: true
+      recommendation: Upgrade kube-proxy to v1.30.0-eksbuild.1 for Kubernetes 1.30
+    - name: coredns
+      current_version: v1.10.1-eksbuild.4
+      target_version: v1.11.1-eksbuild.4
+      is_compatible: true
+      recommendation: Upgrade coredns to v1.11.1-eksbuild.4 for Kubernetes 1.30
+resource_plans:
+    - job_id: job-dcdc2269
+      resource_type: EKSControlPlane
+      resource_name: blue-cluster-green
+      action: REPLICATE
+      dependencies:
+        - VPC:vpc-12345
+      risk_level: LOW
+      validation_status: PENDING
+      notes: Provision new Green EKS control plane v1.30
+    - job_id: job-dcdc2269
+      resource_type: NodeGroup
+      resource_name: ng-general-green
+      action: REPLICATE
+      dependencies:
+        - EKSControlPlane:blue-cluster-green
+      risk_level: MEDIUM
+      validation_status: PENDING
+      notes: Replicate nodegroup with 3 m5.large instances for target EKS v1.30
+    - job_id: job-dcdc2269
+      resource_type: EKSAddon
+      resource_name: vpc-cni
+      action: REPLICATE
+      dependencies:
+        - EKSControlPlane:blue-cluster-green
+      risk_level: LOW
+      validation_status: PENDING
+      notes: Install addon vpc-cni on Green cluster
+    - job_id: job-dcdc2269
+      resource_type: EKSAddon
+      resource_name: kube-proxy
+      action: REPLICATE
+      dependencies:
+        - EKSControlPlane:blue-cluster-green
+      risk_level: LOW
+      validation_status: PENDING
+      notes: Install addon kube-proxy on Green cluster
+    - job_id: job-dcdc2269
+      resource_type: EKSAddon
+      resource_name: coredns
+      action: REPLICATE
+      dependencies:
+        - EKSControlPlane:blue-cluster-green
+      risk_level: LOW
+      validation_status: PENDING
+      notes: Install addon coredns on Green cluster
+    - job_id: job-dcdc2269
+      resource_type: Deployment
+      resource_name: backend/api-server
+      action: REPLICATE
+      dependencies:
+        - Namespace:backend
+      risk_level: LOW
+      validation_status: PENDING
+      notes: Deploy 3 replicas of api-server
+    - job_id: job-dcdc2269
+      resource_type: Deployment
+      resource_name: backend/worker
+      action: REPLICATE
+      dependencies:
+        - Namespace:backend
+      risk_level: LOW
+      validation_status: PENDING
+      notes: Deploy 2 replicas of worker
+    - job_id: job-dcdc2269
+      resource_type: StatefulSet
+      resource_name: backend/redis-cluster
+      action: MANUAL_CHECK
+      dependencies:
+        - StorageClass
+        - PVC
+      risk_level: HIGH
+      validation_status: REQUIRES_REVIEW
+      notes: StatefulSet data migration must be handled via snapshot replication or database replica
+    - job_id: job-dcdc2269
+      resource_type: Ingress
+      resource_name: backend/api-ingress
+      action: RECONFIGURE
+      dependencies:
+        - Service
+      risk_level: MEDIUM
+      validation_status: PENDING
+      notes: Reconfigure Green Ingress with independent ALB target group before cutover
+    - job_id: job-dcdc2269
+      resource_type: PersistentVolumeClaim
+      resource_name: backend/redis-data-0
+      action: MANUAL_CHECK
+      dependencies:
+        - StorageClass:gp3
+      risk_level: CRITICAL
+      validation_status: REQUIRES_REVIEW
+      notes: EBS/EFS volume (50Gi) requires snapshot restore strategy; direct attachment across clusters prohibited
+estimated_cost:
+    control_plane_monthly_usd: 73
+    worker_nodes_monthly_usd: 210.24000000000004
+    estimated_total_monthly_usd: 283.24
+plan_hash: d17439ae108dd6bd813cd5cc6faf1e0591777c034b7d16ee7bf3a1d60b3d1d3d
+created_at: 2026-10-10T02:10:04.740984Z

@@ -1,0 +1,10 @@
+# Binaries
+/eksbg
+*.exe
+*.test
+
+# Workspace state
+.eksbg/
+
+# OS files
+.DS_Store

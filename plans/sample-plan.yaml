@@ -1,0 +1,76 @@
+job_id: job-sample-001
+source_cluster: blue-cluster
+source_version: "1.28"
+target_cluster: green-cluster
+target_version: "1.30"
+region: ap-northeast-2
+compatible: true
+plan_hash: 5d41402abc4b2a76b9719d911017c5926c483a910ec3f338d6df24abf6424e4f
+addon_compatibility:
+  - name: vpc-cni
+    current_version: v1.15.1-eksbuild.1
+    target_version: v1.18.1-eksbuild.3
+    is_compatible: true
+    recommendation: Upgrade vpc-cni for target EKS 1.30
+  - name: kube-proxy
+    current_version: v1.28.2-eksbuild.2
+    target_version: v1.30.0-eksbuild.1
+    is_compatible: true
+    recommendation: Upgrade kube-proxy for target EKS 1.30
+  - name: coredns
+    current_version: v1.10.1-eksbuild.4
+    target_version: v1.11.1-eksbuild.4
+    is_compatible: true
+    recommendation: Upgrade coredns for target EKS 1.30
+resource_plans:
+  - job_id: job-sample-001
+    resource_type: EKSControlPlane
+    resource_name: green-cluster
+    action: REPLICATE
+    dependencies:
+      - VPC:vpc-12345
+    risk_level: LOW
+    validation_status: PENDING
+    notes: Provision new Green EKS control plane v1.30
+  - job_id: job-sample-001
+    resource_type: NodeGroup
+    resource_name: ng-general-green
+    action: REPLICATE
+    dependencies:
+      - EKSControlPlane:green-cluster
+    risk_level: MEDIUM
+    validation_status: PENDING
+    notes: Replicate nodegroup with 3 m5.large instances
+  - job_id: job-sample-001
+    resource_type: Deployment
+    resource_name: backend/api-server
+    action: REPLICATE
+    dependencies:
+      - Namespace:backend
+    risk_level: LOW
+    validation_status: PENDING
+    notes: Deploy 3 replicas of api-server
+  - job_id: job-sample-001
+    resource_type: StatefulSet
+    resource_name: backend/redis-cluster
+    action: MANUAL_CHECK
+    dependencies:
+      - StorageClass
+      - PVC
+    risk_level: HIGH
+    validation_status: REQUIRES_REVIEW
+    notes: StatefulSet data migration requires snapshot or replica synchronization
+  - job_id: job-sample-001
+    resource_type: PersistentVolumeClaim
+    resource_name: backend/redis-data-0
+    action: MANUAL_CHECK
+    dependencies:
+      - StorageClass:gp3
+    risk_level: CRITICAL
+    validation_status: REQUIRES_REVIEW
+    notes: EBS/EFS volume requires snapshot restore strategy
+estimated_cost:
+  control_plane_monthly_usd: 73
+  worker_nodes_monthly_usd: 210.24
+  estimated_total_monthly_usd: 283.24
+created_at: 2026-10-10T00:00:00Z

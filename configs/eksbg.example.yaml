@@ -1,0 +1,32 @@
+# EKS Blue-Green Upgrade CLI Configuration Example
+aws_profile: default
+aws_region: ap-northeast-2
+
+# Source (Blue) and Target (Green) cluster definitions
+blue_cluster: blue-cluster
+green_cluster: green-cluster
+target_version: "1.30"
+
+# Workspace & Persistence
+work_dir: ./.eksbg
+state_store: sqlite
+sqlite_path: ./.eksbg/state.db
+# s3_bucket: my-company-eksbg-state-backup # Optional remote backup
+
+# Traffic Routing Configuration
+traffic_method: route53 # route53, alb, or ingress
+route53_zone_id: Z0123456789ABCDEF
+record_name: app.example.com
+
+# Validation & Healthcheck Settings
+health_check_timeout_sec: 10
+health_check_urls:
+  - https://app.example.com/healthz
+
+# Exclusion policies
+exclude_resources:
+  - "kube-system/*"
+  - "cert-manager/cert-manager-webhook"
+
+# Execution mode
+dry_run: false

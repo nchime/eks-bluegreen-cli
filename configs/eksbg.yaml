@@ -1,0 +1,11 @@
+aws_profile: ""
+aws_region: ap-northeast-2
+blue_cluster: blue-cluster
+green_cluster: green-cluster
+target_version: "1.30"
+work_dir: ./.eksbg
+state_store: sqlite
+sqlite_path: ./.eksbg/state.db
+traffic_method: route53
+health_check_timeout_sec: 10
+dry_run: false
